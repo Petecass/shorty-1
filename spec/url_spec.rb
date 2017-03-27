@@ -30,7 +30,7 @@ describe Url do
       let(:url) { Url.create(params) }
 
       it 'generates a shortcode' do
-        expect(url.shortcode).to match /^[0-9a-zA-Z_]{6}$/
+        expect(url.shortcode).to match(/^[0-9a-zA-Z_]{6}$/)
         expect(url.url).to eq params[:url]
       end
 
@@ -67,7 +67,6 @@ describe Url do
         expect(url.shortcode).to eq data[:shortcode]
         expect(url.url).to eq data[:url]
       end
-
     end
 
     context "when record doesn't exist" do

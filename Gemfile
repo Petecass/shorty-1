@@ -3,11 +3,11 @@ source 'https://rubygems.org'
 
 ruby '2.3.3'
 
+gem 'json'
 gem 'redis'
 gem 'sinatra'
-gem 'json'
 
 group :test do
-  gem 'timecop'
   gem 'rspec'
+  gem 'timecop'
 end

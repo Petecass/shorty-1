@@ -49,13 +49,13 @@ describe 'My Sinatra Application' do
 
     context 'when url is blank' do
       let(:params) { { shortcode: 'shorty', url: '' } }
+
       before(:each) do
         post '/shorten', params
       end
 
       it 'returns 400' do
-        # body = JSON.parse(last_response.body)
-        # expect(body['error']).to eq 'Url is not valid'
+        expect(body['error']).to eq 'no url present'
         expect(last_response.content_type).to eq 'application/json'
         expect(last_response.status).to eq 400
       end
@@ -150,6 +150,7 @@ describe 'My Sinatra Application' do
       end
 
       it 'returns 200' do
+        expect(last_response.content_type).to eq 'application/json'
         expect(last_response.status).to eq 200
       end
 
