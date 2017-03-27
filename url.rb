@@ -25,7 +25,7 @@ class Url
   end
 
   def self.create(params)
-    return false unless params && params[:url] && !params[:url].empty?
+    return false unless required_params_present?(params)
 
     url = Url.new(params)
     return false unless url.shortcode =~ /^[0-9a-zA-Z_]{6}$/
@@ -58,6 +58,12 @@ class Url
 
   def self.generate_last_seen_date
     params['lastSeenDate'] || params[:lastSeenDate] || params[:last_seen_date] || Time.now.iso8601
+  end
+
+  def self.required_params_present?(params)
+    params &&
+      (params[:url] && !params[:url].empty?) ||
+      (params['url'] && !params['url'].empty?)
   end
 
   def to_hash

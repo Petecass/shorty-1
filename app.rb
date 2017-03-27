@@ -14,10 +14,11 @@ def respond_with(code, body)
 end
 
 post '/shorten' do
-  required_params_present = params && params[:url] && !params[:url].empty?
+  params = JSON.parse(request.body.read.to_s)
+  required_params_present = params && params['url'] && !params['url'].empty?
   return respond_with(400, error: 'no url present') unless required_params_present
 
-  if Url.find params[:shortcode]
+  if Url.find params['shortcode']
     respond_with(409, error: 'The desired shortcode is already in use')
 
   elsif (url = Url.create(params))
