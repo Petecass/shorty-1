@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'rack/test'
 require 'rspec'
 
@@ -12,4 +13,8 @@ module RSpecMixin
   end
 end
 
-RSpec.configure { |c| c.include RSpecMixin }
+RSpec.configure do |c|
+  c.include RSpecMixin
+  c.before(:each) { redis.flushdb }
+  c.after(:each) { redis.quit }
+end
