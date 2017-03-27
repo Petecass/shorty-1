@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+# rubocop:disable Style/BlockDelimiters
+
 require File.expand_path '../spec_helper.rb', __FILE__
 
 describe 'My Sinatra Application' do
@@ -103,14 +105,28 @@ describe 'My Sinatra Application' do
   describe '#GET /:shortcode' do
     context 'when shortcode is present' do
       let(:params) { { shortcode: 'shorty', url: 'http://example.com' } }
-      before(:each) do
-        Url.create(params)
-        get "/#{params[:shortcode]}"
-      end
+      let!(:url) { Url.create(params) }
 
       it 'returns 302' do
+        get "/#{params[:shortcode]}"
         expect(last_response.status).to eq 302
         expect(last_response.location).to eq params[:url]
+      end
+
+      it 'updates redirect_count' do
+        expect {
+          get "/#{params[:shortcode]}"
+        }.to change {
+          Url.find(url.shortcode).redirect_count
+        }.by 1
+      end
+
+      it 'updates last seen date' do
+        get "/#{params[:shortcode]}"
+        new_time = Time.new(2030, 11, 1, 15, 25, 0, '+09:00').iso8601
+        Timecop.freeze(new_time) do
+          expect(Url.find(url.shortcode).last_seen_date).to eq new_time
+        end
       end
     end
 

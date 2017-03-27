@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'timecop'
 require 'rack/test'
 require 'rspec'
 require 'pry'

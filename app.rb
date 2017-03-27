@@ -20,7 +20,7 @@ post '/shorten' do
   if Url.find params[:shortcode]
     respond_with(409, error: 'The desired shortcode is already in use')
 
-  elsif url = Url.create(params)
+  elsif (url = Url.create(params))
     respond_with(201, shortcode: url.shortcode)
 
   else
@@ -29,16 +29,19 @@ post '/shorten' do
 end
 
 get '/:shortcode' do
-  if url = Url.find(params[:shortcode])
+  if (url = Url.find(params[:shortcode]))
+    touch_record(url)
+
     location = url.url
     redirect location
+
   else
     respond_with(404, error: 'Shortcode not found')
   end
 end
 
 get '/:shortcode/stats' do
-  if url = Url.find(params[:shortcode])
+  if (url = Url.find(params[:shortcode]))
     body = {
       startDate: url.start_date,
       redirectCount: url.redirect_count,
@@ -49,4 +52,19 @@ get '/:shortcode/stats' do
   else
     respond_with(404, error: 'Shortcode not found')
   end
+end
+
+def touch_record(url)
+  increment_redirect_count(url)
+  update_date(url)
+end
+
+def increment_redirect_count(url)
+  current_count = url.redirect_count
+  current_count += 1
+  url.update(redirect_count: current_count)
+end
+
+def update_date(url)
+  url.update(last_seen_date: Time.now.iso8601)
 end

@@ -55,6 +55,10 @@ class Url
     params['redirectCount'] || params[:redirectCount] || params['redirect_count'] || 0
   end
 
+  def self.generate_last_seen_date
+    params['lastSeenDate'] || params[:lastSeenDate] || params[:last_seen_date] || Time.now.iso8601
+  end
+
   def to_hash
     hash = {}
     instance_variables.each { |var| hash[var.to_s.delete('@')] = instance_variable_get(var) }
