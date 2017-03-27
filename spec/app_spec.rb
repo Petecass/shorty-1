@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'pry'
 require File.expand_path '../spec_helper.rb', __FILE__
 
 describe 'My Sinatra Application' do

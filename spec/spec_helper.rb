@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require 'rack/test'
 require 'rspec'
+require 'pry'
 
 ENV['RACK_ENV'] = 'test'
 
