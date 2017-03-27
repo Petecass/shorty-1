@@ -5,12 +5,13 @@ describe Url do
   let!(:redis) { Redis.new }
   describe '#create' do
     context 'with valid params' do
-      let(:params) { { shortcode: 'shorty', url: 'https://example' } }
+      let(:params) { { shortcode: 'shorty', url: 'https://example', redirectCount: 3 } }
       let(:url) { Url.create(params) }
 
       it 'instatiates the object ' do
         expect(url.shortcode).to eq params[:shortcode]
         expect(url.url).to eq params[:url]
+        expect(url.redirect_count).to eq params[:redirectCount]
         expect(url.start_date).to eq Time.now.iso8601.to_s
       end
 
@@ -18,8 +19,9 @@ describe Url do
         url
         record = JSON.parse(redis.get(params[:shortcode]))
         expect(record['shortcode']).to eq params[:shortcode]
+        expect(record['redirect_count']).to eq params[:redirectCount]
         expect(record['url']).to eq params[:url]
-        expect(record['startDate']).to eq Time.now.iso8601.to_s
+        expect(record['start_date']).to eq Time.now.iso8601.to_s
       end
     end
 
@@ -37,7 +39,7 @@ describe Url do
         record = JSON.parse(redis.get(url.shortcode))
         expect(record['shortcode']).to eq url.shortcode
         expect(record['url']).to eq params[:url]
-        expect(record['startDate']).to eq Time.now.iso8601.to_s
+        expect(record['start_date']).to eq Time.now.iso8601.to_s
       end
     end
 

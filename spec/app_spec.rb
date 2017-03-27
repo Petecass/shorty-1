@@ -3,6 +3,7 @@ require File.expand_path '../spec_helper.rb', __FILE__
 
 describe 'My Sinatra Application' do
   let!(:redis) { Redis.new }
+  let(:body) { JSON.parse(last_response.body) }
 
   describe '#POST /shorten' do
     context 'with valid params' do
@@ -27,10 +28,9 @@ describe 'My Sinatra Application' do
 
       it 'returns 201' do
         post '/shorten', params
-        body = JSON.parse(last_response.body)
         expect(last_response.content_type).to eq 'application/json'
-        expect(redis.get(body['shortcode'])).to eq params[:url]
         expect(last_response.status).to eq 201
+        expect(Url.find(body['shortcode']).url).to eq params[:url]
       end
     end
 
@@ -39,9 +39,8 @@ describe 'My Sinatra Application' do
 
       it 'returns 201' do
         post '/shorten', params
-        body = JSON.parse(last_response.body)
         expect(last_response.content_type).to eq 'application/json'
-        expect(redis.get(body['shortcode'])).to eq params[:url]
+        expect(Url.find(body['shortcode']).url).to eq params[:url]
         expect(last_response.status).to eq 201
       end
     end
@@ -67,7 +66,6 @@ describe 'My Sinatra Application' do
       end
 
       it 'returns 400' do
-        body = JSON.parse(last_response.body)
         expect(body['error']).to eq 'no url present'
         expect(last_response.content_type).to eq 'application/json'
         expect(last_response.status).to eq 400
@@ -80,9 +78,8 @@ describe 'My Sinatra Application' do
       end
 
       it 'returns 409' do
-        redis.set(params[:shortcode], params[:url])
+        Url.create(params)
         post '/shorten', params
-        body = JSON.parse(last_response.body)
         expect(last_response.content_type).to eq 'application/json'
         expect(body['error']).to eq 'The desired shortcode is already in use'
         expect(last_response.status).to eq 409
@@ -96,7 +93,6 @@ describe 'My Sinatra Application' do
       end
 
       it 'returns 422' do
-        body = JSON.parse(last_response.body)
         expect(last_response.content_type).to eq 'application/json'
         expect(body['error']).to eq 'Shortcode not valid'
         expect(last_response.status).to eq 422
@@ -108,7 +104,7 @@ describe 'My Sinatra Application' do
     context 'when shortcode is present' do
       let(:params) { { shortcode: 'shorty', url: 'http://example.com' } }
       before(:each) do
-        redis.set(params[:shortcode], params[:url])
+        Url.create(params)
         get "/#{params[:shortcode]}"
       end
 
@@ -121,7 +117,6 @@ describe 'My Sinatra Application' do
     context 'when shortcode does not exist' do
       it 'returns 404' do
         get '/wookie'
-        body = JSON.parse(last_response.body)
         expect(last_response.content_type).to eq 'application/json'
         expect(body['error']).to eq 'Shortcode not found'
         expect(last_response.status).to eq 404
@@ -132,23 +127,37 @@ describe 'My Sinatra Application' do
   describe '#GET /:shortcode/stats' do
     context 'when shortcode exists' do
       let(:params) { { shortcode: 'shorty', url: 'http://example.com' } }
+      let!(:url) { Url.create(params) }
+
       before(:each) do
-        redis.set(params[:shortcode], params[:url])
         get "/#{params[:shortcode]}/stats"
       end
 
-      xit 'returns 200' do
-        body = JSON.parse(last_response.body)
+      it 'returns 200' do
         expect(last_response.status).to eq 200
-        expect(body['startDate']).to be
-        expect(body['lastSeenDate']).to be
+      end
+
+      it 'returns the startDate and redirectCount' do
+        expect(body['startDate']).to eq url.start_date
+        expect(body['redirectCount']).to eq url.redirect_count
+        expect(body['lastSeenDate']).to be_nil
+      end
+
+      context 'when redirectCount is present' do
+        let(:params) { { shortcode: 'wookie', url: 'https://example', redirectCount: 3 } }
+        it 'displays lastSeenDate' do
+          url = Url.create(params)
+          get "/#{params[:shortcode]}/stats"
+          expect(body['startDate']).to eq url.start_date
+          expect(body['redirectCount']).to eq url.redirect_count
+          expect(body['lastSeenDate']).to eq url.last_seen_date
+        end
       end
     end
 
     context 'when shortcode does not exist' do
       it 'returns 404' do
         get '/wookie/stats'
-        body = JSON.parse(last_response.body)
         expect(last_response.content_type).to eq 'application/json'
         expect(body['error']).to eq 'Shortcode not found'
         expect(last_response.status).to eq 404

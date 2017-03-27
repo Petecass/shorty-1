@@ -3,14 +3,14 @@ require 'json'
 
 class Url
   DB = Redis.new
-  attr_accessor :shortcode, :url, :start_date, :redirect_count
+  attr_accessor :shortcode, :url, :start_date, :redirect_count, :last_seen_date
 
   def initialize(params)
     @shortcode = self.class.generate_shortcode(params)
     @url = self.class.generate_url(params)
-    @start_date = params['startDate'] || params[:startDate]
-    @last_seen_date = params['last_seen_date'] || params[:lastSeenDate]
-    @redirect_count = params['resetCount'] || params[:resetCount] || 0
+    @start_date = params['startDate'] || params[:startDate] || Time.now.iso8601
+    @last_seen_date = params['lastSeenDate'] || params[:lastSeenDate] || Time.now.iso8601
+    @redirect_count = self.class.generate_redirect_count(params)
   end
 
   def update(params)
@@ -25,16 +25,11 @@ class Url
 
   def self.create(params)
     return false unless params && params[:url] && !params[:url].empty?
-    shortcode = generate_shortcode(params)
 
-    data = { shortcode: shortcode,
-             url: generate_url(params),
-             startDate: Time.now.iso8601,
-             lastSeenDate: Time.now.iso8601,
-             redirectCount: 0 }
-
-    if DB.set(shortcode, data.to_json)
-      Url.new(data)
+    url = Url.new(params)
+    return false unless url.shortcode =~ /^[0-9a-zA-Z_]{6}$/
+    if DB.set(url.shortcode, url.to_hash.to_json)
+      url
     else
       false
     end
@@ -43,7 +38,6 @@ class Url
   def self.find(shortcode)
     record = DB.get(shortcode)
     return nil if record.nil?
-
     Url.new(JSON.parse(record))
   end
 
@@ -57,7 +51,9 @@ class Url
     params['url'] || params[:url]
   end
 
-  private
+  def self.generate_redirect_count(params)
+    params['redirectCount'] || params[:redirectCount] || params['redirect_count'] || 0
+  end
 
   def to_hash
     hash = {}
