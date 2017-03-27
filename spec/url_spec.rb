@@ -13,13 +13,31 @@ describe Url do
         expect(url.url).to eq params[:url]
         expect(url.start_date).to eq Time.now.iso8601.to_s
       end
+
       it 'saves object to redis' do
         url
         record = JSON.parse(redis.get(params[:shortcode]))
         expect(record['shortcode']).to eq params[:shortcode]
         expect(record['url']).to eq params[:url]
         expect(record['startDate']).to eq Time.now.iso8601.to_s
+      end
+    end
 
+    context 'with no shortcode' do
+      let(:params) { { shortcode: '', url: 'https://example' } }
+      let(:url) { Url.create(params) }
+
+      it 'generates a shortcode' do
+        expect(url.shortcode).to match /^[0-9a-zA-Z_]{6}$/
+        expect(url.url).to eq params[:url]
+      end
+
+      it 'saves object to db' do
+        url
+        record = JSON.parse(redis.get(url.shortcode))
+        expect(record['shortcode']).to eq url.shortcode
+        expect(record['url']).to eq params[:url]
+        expect(record['startDate']).to eq Time.now.iso8601.to_s
       end
     end
 

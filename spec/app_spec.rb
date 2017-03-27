@@ -7,19 +7,18 @@ describe 'My Sinatra Application' do
   describe '#POST /shorten' do
     context 'with valid params' do
       let(:params) { { shortcode: 'shorty', url: 'http://example.com' } }
-      before(:each) do
-        post '/shorten', params
-      end
 
       it 'returns 201' do
+        post '/shorten', params
         body = JSON.parse(last_response.body)
         expect(last_response.content_type).to eq 'application/json'
         expect(body['shortcode']).to eq params[:shortcode]
         expect(last_response.status).to eq 201
       end
 
-      it 'saves url to redis' do
-        expect(redis.get(params[:shortcode])).to eq params[:url]
+      it 'saves url to db' do
+        expect(Url).to receive(:create)
+        post '/shorten', params
       end
     end
 
