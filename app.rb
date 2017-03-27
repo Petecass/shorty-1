@@ -8,11 +8,6 @@ before do
   content_type 'application/json'
 end
 
-def respond_with(code, body)
-  status code
-  body.to_json
-end
-
 post '/shorten' do
   params = JSON.parse(request.body.read.to_s)
   required_params_present = params && params['url'] && !params['url'].empty?
@@ -68,4 +63,9 @@ end
 
 def update_date(url)
   url.update(last_seen_date: Time.now.iso8601)
+end
+
+def respond_with(code, body)
+  status code
+  body.to_json
 end
